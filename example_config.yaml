@@ -1,0 +1,89 @@
+# Orpheus 示例配置文件
+# 复制此文件并根据您的需求修改参数
+
+# CD-HIT-EST 参数配置
+cdhit:
+  executable: "cd-hit-est"
+  identity: 0.95        # 可以调整为 0.90, 0.95, 0.98 等
+  word_size: 10         
+  memory: 0             # 设置为具体数值限制内存使用，如 8000 (8GB)
+  threads: 8            # 根据服务器CPU核心数调整（可通过 -t 参数覆盖）
+  coverage: 0.9         
+  coverage_mode: 0      
+  description: 0        
+  extra_params: ""      # 其他CD-HIT参数，如 "-r 1"
+
+# BUSCO 质量评估配置（可选）
+busco:
+  enabled: true   # 设置为 true 启用 BUSCO 评估
+  
+  # Lineage 数据集路径
+  # 可以是完整路径或数据集名称
+  # 示例: "/mnt/data/01.databases/poales_odb12" 或 "eukaryota_odb10"
+  lineage: "/mnt/data/01.databases/poales_odb12"
+  
+  mode: "transcriptome"  # transcriptome, genome, or proteins
+  threads: 8
+
+# TransDecoder 参数配置
+transdecoder:
+  longorfs_executable: "TransDecoder.LongOrfs"
+  predict_executable: "TransDecoder.Predict"
+  min_protein_length: 100          # 最小蛋白长度（氨基酸数）
+  genetic_code: "universal"        # 遗传密码表
+  retain_long_orfs: true
+  retain_long_orfs_length: 900     # 保留长 ORF 的阈值（核苷酸数，默认900=300aa）
+  single_best_only: false          # 改为 true 可只保留每个转录本的最佳 ORF
+  
+  # 同源搜索配置（推荐启用，使用同源证据而非仅依赖长度）
+  homology_search:
+    enabled: false                 # 设为 true 启用同源搜索
+    tool: "diamond"                # 可选: diamond 或 blastp
+    diamond_executable: "diamond"
+    blastp_executable: "blastp"
+    
+    # 蛋白质数据库路径（请修改为您的数据库路径）
+    # Diamond: 使用 .dmnd 格式
+    # BLASTP: 使用 .fasta 或已构建的 BLAST 数据库
+    database: "/mnt/data/01.databases/swissprot_db.dmnd"
+    
+    evalue: 1e-5                   # E-value 阈值
+    max_target_seqs: 1             # 每个查询保留的最大目标序列数
+    threads: 16                    # 线程数（可通过 -t 参数覆盖）
+    extra_params: ""               # 其他自定义参数
+    
+    # 完整 ORF 过滤（新增）
+    use_complete_only: true        # 只使用完整的 ORF 进行同源搜索（推荐）
+
+# 转录本评分和筛选配置（新增）
+scoring:
+  # 评分权重（总和应为 1.0）
+  completeness_weight: 0.4         # ORF 完整性权重
+  length_weight: 0.3               # ORF 长度权重
+  homology_weight: 0.3             # 同源性权重
+  
+  # 筛选阈值
+  min_score_threshold: 0.5         # 最小总分阈值
+  max_transcripts_per_gene: 1      # 每个基因保留的最大转录本数（0 = 保留所有）
+  
+  # 归一化参数
+  max_orf_length: 3000             # ORF 长度归一化参考值（bp）
+
+# 输入输出配置
+io:
+  work_dir: "./orpheus_output"
+  
+  # 请修改为您的Trinity组装文件路径
+  trinity_assembly: "/path/to/your/trinity_assembly.fasta"
+  
+  cdhit_output: "cdhit_result.fasta"
+  transdecoder_output: "transdecoder_results"
+  scoring_output: "scored_transcripts.tsv"  # 评分输出文件（新增）
+  keep_intermediate: true
+
+# 日志配置
+logging:
+  level: "INFO"         # DEBUG, INFO, WARNING, ERROR
+  log_file: "orpheus.log"
+  console: true
+

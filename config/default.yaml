@@ -1,0 +1,207 @@
+# Orpheus 配置文件 - 转录本可信性评估
+# ================================================
+
+# CD-HIT-EST 参数配置
+# 用于合并相似的转录本，去除冗余
+cdhit:
+  # CD-HIT-EST 可执行文件路径（如果在PATH中，直接写命令名即可）
+  executable: "cd-hit-est"
+  
+  # 序列相似度阈值 (0.0-1.0)
+  # 0.95 表示95%相似度的序列会被聚类
+  identity: 0.95
+  
+  # 词长 (word size)
+  # 对于identity >= 0.9, 推荐使用 8-10
+  word_size: 10
+  
+  # 内存限制 (MB)
+  # 0 表示无限制
+  memory: 0
+  
+  # 线程数
+  threads: 8
+  
+  # 比对覆盖度 (alignment coverage for shorter sequence)
+  # 0.0-1.0, 0.9 表示较短序列的90%需要被比对覆盖
+  coverage: 0.9
+  
+  # 比对覆盖度控制模式
+  # 0: 默认模式
+  # 1: 双向覆盖度控制
+  coverage_mode: 0
+  
+  # 描述长度
+  description: 0
+  
+  # 其他自定义参数（会直接传递给CD-HIT）
+  extra_params: ""
+
+# TransDecoder 参数配置
+# 用于预测转录本的开放阅读框（ORF）并评估完整度
+transdecoder:
+  # TransDecoder.LongOrfs 可执行文件路径
+  longorfs_executable: "TransDecoder.LongOrfs"
+  
+  # TransDecoder.Predict 可执行文件路径
+  predict_executable: "TransDecoder.Predict"
+  
+  # 最小蛋白长度（氨基酸数）
+  # 默认 100，表示只保留至少 100aa 的 ORF
+  min_protein_length: 100
+  
+  # 遗传密码表
+  # 选项: universal, Euplotes, Tetrahymena, Candida, Acetabularia, Mitochondrial-Canonical, ...
+  genetic_code: "universal"
+  
+  # 是否保留长 ORF（即使没有其他证据）
+  retain_long_orfs: true
+  
+  # 保留长 ORF 的长度阈值（核苷酸数，即碱基数）
+  # 默认 900 核苷酸（相当于 300 氨基酸）
+  # 超过此长度的 ORF 即使没有同源证据也会保留
+  retain_long_orfs_length: 900
+  
+  # 是否只保留每个转录本的单一最佳 ORF
+  single_best_only: false
+  
+  # 同源搜索配置（使用 Diamond 或 BLAST 提供同源证据）
+  homology_search:
+    # 是否启用同源搜索（强烈推荐）
+    enabled: True
+    
+    # 是否只使用完整的 ORF 进行同源搜索
+    # 完整 ORF 指带有起始密码子和终止密码子的 ORF (type:complete)
+    # 
+    # True (默认，推荐用于 PCR): 仅使用完整 ORF
+    #   - 适合 PCR 引物设计和基因克隆
+    #   - 可以确保扩增完整基因
+    #   - 提高同源搜索质量
+    # 
+    # False: 使用所有 ORF（包括不完整的）
+    #   - 适合基因发现和功能注释研究
+    #   - 即使转录本不完整也可以找到同源基因
+    #   - 可能增加假阳性匹配
+    use_complete_only: True
+    
+    # 搜索工具: diamond 或 blastp
+    tool: "diamond"
+    
+    # Diamond 可执行文件路径
+    diamond_executable: "diamond"
+    
+    # BLASTP 可执行文件路径（如果使用 blastp）
+    blastp_executable: "blastp"
+    
+    # 蛋白质数据库路径
+    # Diamond: .dmnd 格式数据库
+    # BLASTP: 可以是 .fasta（会自动创建索引）或已有的 blast 数据库
+    database: "/mnt/data/01.databases/swissprot_db.dmnd"
+    
+    # E-value 阈值
+    evalue: 1e-5
+    
+    # 最大目标序列数
+    max_target_seqs: 1
+    
+    # 线程数
+    threads: 16
+    
+    # 其他自定义参数
+    extra_params: ""
+
+# BUSCO 质量评估配置
+# 用于评估转录组组装的完整性
+busco:
+  # 是否启用 BUSCO 评估（可选）
+  enabled: true
+  
+  # BUSCO 可执行文件路径
+  executable: "busco"
+  
+  # Lineage 数据集路径（必需）
+  # 可以是以下两种方式之一：
+  #   1. 完整路径：/mnt/data/01.databases/poales_odb12
+  #   2. 数据集名称（需要提前下载）：poales_odb12
+  # 常用数据集:
+  #   - eukaryota_odb10: 真核生物
+  #   - metazoa_odb10: 后生动物
+  #   - arthropoda_odb10: 节肢动物
+  #   - vertebrata_odb10: 脊椎动物
+  #   - viridiplantae_odb10: 绿色植物
+  #   - poales_odb12: 禾本目植物（玉米、水稻、小麦等）
+  #   - fungi_odb10: 真菌
+  # 更多数据集可通过 busco --list-datasets 查看
+  lineage: "/mnt/data/01.databases/poales_odb12"
+  
+  # 模式
+  # transcriptome: 转录组模式（推荐用于转录本序列）
+  # genome: 基因组模式
+  # proteins: 蛋白质模式
+  mode: "transcriptome"
+  
+  # 线程数
+  threads: 8
+  
+  # 其他自定义参数
+  extra_params: ""
+
+# 转录本评分和筛选配置
+scoring:
+  # ORF 完整性权重（0.0-1.0）
+  # 完整 ORF（有起始和终止密码子）的重要性
+  completeness_weight: 0.4
+  
+  # ORF 长度权重（0.0-1.0）
+  # 较长 ORF 通常更可靠
+  length_weight: 0.3
+  
+  # 同源性权重（0.0-1.0）
+  # 是否有同源蛋白支持
+  homology_weight: 0.3
+  
+  # 最小总分阈值（0.0-1.0）
+  # 低于此分数的转录本将被标记为低质量
+  min_score_threshold: 0.5
+  
+  # 每个基因保留的最大转录本数
+  # 对于同一基因的多个转录本，只保留评分最高的前 N 个
+  # 0 表示保留所有
+  max_transcripts_per_gene: 1
+  
+  # ORF 长度归一化参数
+  # 用于将 ORF 长度转换为 0-1 分数
+  # 长度大于此值的 ORF 得分为 1.0
+  max_orf_length: 3000
+
+# 输入输出配置
+io:
+  # 工作目录（所有中间文件和结果的基础目录）
+  work_dir: "./orpheus_output"
+  
+  # Trinity组装结果文件路径
+  trinity_assembly: ""
+  
+  # CD-HIT输出文件名（会放在work_dir下）
+  cdhit_output: "cdhit_result.fasta"
+  
+  # TransDecoder 输出目录（会放在work_dir下）
+  transdecoder_output: "transdecoder_results"
+  
+  # 评分和筛选输出文件（会放在work_dir下）
+  scoring_output: "scored_transcripts.tsv"
+  
+  # 是否保留中间文件
+  keep_intermediate: true
+
+# 日志配置
+logging:
+  # 日志级别: DEBUG, INFO, WARNING, ERROR
+  level: "INFO"
+  
+  # 日志文件路径
+  log_file: "orpheus.log"
+  
+  # 是否同时输出到控制台
+  console: true
+
